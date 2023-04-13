@@ -31,7 +31,7 @@ const db = {
 //Sync all the tables with the database
 const syncAllTables = async () => {
   try {
-    await db.sequelize.sync({ force: true });
+    await db.sequelize.sync();
     console.log("Synced all the tables with the database successfully.");
   } catch (err) {
     console.log("Error in syncing the tables with database:", err);
