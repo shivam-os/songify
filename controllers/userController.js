@@ -74,13 +74,13 @@ exports.login = async (req, res) => {
 
     //If password is matched the create a jwt and send it
     const payload = { userId: existingUser.dataValues.userId };
-    const bearerToken = jwt.verify(payload, process.env.ACCESS_TOKEN_SECRET, {
+    const bearerToken = await jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: "3h",
     });
 
     return res
       .status(201)
-      .cookie("token", "Bearer " + bearerToken, {
+      .cookie("token", bearerToken, {
         expires: new Date(Date.now() + 3 * 60 * 60 * 1000), //Cookie will be removed in 3 hours
         httpOnly: true,
       })
@@ -96,7 +96,7 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
   return res
     .status(201)
-    .clearCookie("token", "Bearer " + bearerToken, {
+    .clearCookie("token", bearerToken, {
       expires: new Date(Date.now() + 3 * 60 * 60 * 1000), //Cookie will be removed in 3 hours
       httpOnly: true,
     })
