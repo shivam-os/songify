@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     externalSongId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
@@ -18,12 +18,27 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
 
-    artistName: {
+    album: {
       type: DataTypes.STRING,
       allowNull: false,
     },
 
-    Album: {
+    duration: {
+      type: DataTypes.SMALLINT,
+      allowNull: false,
+    },
+
+    year: {
+      type: DataTypes.SMALLINT,
+      allowNull: false,
+    },
+
+    url: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+
+    primaryArtists: {
       type: DataTypes.STRING,
       allowNull: false,
     },

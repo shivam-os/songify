@@ -1,15 +1,13 @@
 const { validationResult } = require("express-validator");
 const User = require("../config/db").user;
+const checkErrors = require("../utils/validators/checkErrors")
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 exports.signup = async (req, res) => {
-  //Handle errors coming from the singup userValidator
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  //Handle errors coming from the signup userValidator
+  checkErrors(req, res);
 
   try {
     const { name, email, password } = req.body;
@@ -43,10 +41,7 @@ exports.signup = async (req, res) => {
 
 exports.login = async (req, res) => {
   //Hanldle errors coming from login userValidator
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  checkErrors(req, res);
 
   try {
     const { email, password } = req.body;
