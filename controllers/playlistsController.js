@@ -1,27 +1,56 @@
 const Playlist = require("../config/db").playlist;
 const Song = require("../config/db").song;
 const PlaylistSong = require("../config/db").playlistSong;
-const playlist = require("../models/playlist");
 const songUtils = require("../utils/songUtils");
-const checkErrors = require("../utils/validators/checkErrors")
-const { validationResult } = require("express-validator");
+const checkErrors = require("../utils/validators/checkErrors");
+
+//Checks if the user has playlist with given id
+const checkIfPlaylistExist = async (playlistId, userId) => {
+  try {
+    const response = await Playlist.findOne({
+      where: { playlistId: playlistId, userId: userId },
+      attributes: ["playlistId"],
+    });
+    if (response) {
+      return true;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
+  return false;
+};
+
+//Checks if song exists in database or not
+const checkIfSongExist = async (songId) => {
+  try {
+    const response = await Song.findOne({
+      where: { songId: songId },
+    });
+    if (response) {
+      return true;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
+  return false;
+};
 
 //GET method to get all the playlists created by the user
 exports.getAllPlaylists = async (req, res) => {
   try {
     const userPlaylists = await Playlist.findAll({
-      attributes: ["playlistId", "name", "description"],
       where: { userId: req.user.dataValues.userId },
+      attributes: ["playlistId", "name", "description"],
     });
-    console.log("user", req.user.dataValues.userId);
+
     //If no playlists found for a user
-    if (userPlaylists == undefined) {
+    if (userPlaylists.length === 0) {
       return res
         .status(404)
         .json({ msg: "No playlists found! Create them to get the list." });
     }
-
-    console.log("playlists", userPlaylists);
 
     return res.status(200).json(userPlaylists);
   } catch (err) {
@@ -55,22 +84,36 @@ exports.createPlaylist = async (req, res) => {
   }
 };
 
-//GET method to get playlist with given id
+//GET method to get all details of playlist with given id
 exports.getSinglePlaylist = async (req, res) => {
   try {
-    const existingPlaylist = await Playlist.findOne({
-      attributes: ["name", "description"],
-      where: { playlistId: req.params.playlistid },
-    });
-
-    //If playlist does not exist
-    if (!existingPlaylist) {
+    if (
+      !(await checkIfPlaylistExist(
+        req.params.playlistid,
+        req.user.dataValues.userId
+      ))
+    ) {
       return res
         .status(404)
-        .json({ err: "Playlist with given id is not found!" });
+        .json({ err: "Playlist with given id does not exist!" });
     }
 
-    return res.status(201).json(existingPlaylist);
+    const playlistData = await Playlist.findAll({
+      where: { playlistId: req.params.playlistid },
+      attributes: ["playlistId", "name", "description"],
+      include: [
+        {
+          model: Song,
+          through: "playlist_songs",
+          attributes: {exclude: ["createdAt", "updatedAt"]},
+          through: {
+            attributes: []
+          },
+        },
+      ],
+    });
+
+    return res.status(201).json(playlistData);
   } catch (err) {
     console.log(err);
     return res
@@ -86,19 +129,27 @@ exports.updatePlaylist = async (req, res) => {
 
   try {
     const { name, description } = req.body;
-    const existingPlaylist = await Playlist.update(
-      { name: name, description: description },
-      {
-        where: { playlistId: req.params.playlistid },
-      }
-    );
 
-    //If playlist does not exist
-    if (existingPlaylist[0] === 0) {
+    if (
+      !(await checkIfPlaylistExist(
+        req.params.playlistid,
+        req.user.dataValues.userId
+      ))
+    ) {
       return res
         .status(404)
         .json({ err: "Playlist with given id does not exist!" });
     }
+
+    //Update the playlist data
+    await Playlist.update(
+      { name: name, description: description },
+      {
+        where: {
+          playlistId: req.params.playlistid,
+        },
+      }
+    );
 
     return res.status(201).json({ msg: "Playlist updated successfully!" });
   } catch (err) {
@@ -112,16 +163,23 @@ exports.updatePlaylist = async (req, res) => {
 //DELETE method to delete playlist with given id
 exports.deletePlaylist = async (req, res) => {
   try {
-    const deletedPlaylist = await Playlist.destroy({
-      where: { playlistId: req.params.playlistid },
-    });
-
-    //If playlist does not exits
-    if (deletedPlaylist) {
+    if (
+      !(await checkIfPlaylistExist(
+        req.params.playlistid,
+        req.user.dataValues.userId
+      ))
+    ) {
       return res
         .status(404)
         .json({ err: "Playlist with given id does not exist!" });
     }
+
+    //Delete the given playlist
+    await Playlist.destroy({
+      where: {
+        playlistId: req.params.playlistid,
+      },
+    });
 
     return res.status(200).json({ msg: "Playlist deleted successfully!" });
   } catch (err) {
@@ -139,21 +197,43 @@ exports.addSongToPlaylist = async (req, res) => {
 
   try {
     const { songId } = req.body;
-    const songDetails = songUtils.getSongFromId(songId);
 
-    //Add song details to the songs table
-    await Song.create({
-      ...songDetails,
-      externalSongId: songId,
-    });
+    console.log("value", req);
 
-    //Add songId and playlistId to table junction table playlist_songs
+    //Check if user has playlist with given id
+    if (
+      !(await checkIfPlaylistExist(
+        req.params.playlistid,
+        req.user.dataValues.userId
+      ))
+    ) {
+      return res
+        .status(404)
+        .json({ err: "Playlist with given id does not exist!" });
+    }
+
+    //Get song details
+    const songDetails = await songUtils.getSongFromId(songId);
+
+    //Check if song was found or not
+    if (Object.keys(songDetails).length === 0) {
+      return res.status(404).json({
+        err: "Song with given id does not exist. Please recheck the songId!",
+      });
+    }
+
+    //Check if song with given id exists in database already or not
+    if (!(await checkIfSongExist(songId))) {
+      await Song.create(songDetails);
+    }
+
+    //Add songId & playlistId to playlist_songs table
     await PlaylistSong.create({
-      playlistId: req.params.playlistid,
       songId: songId,
+      playlistId: req.params.playlistid,
     });
 
-    return res.send(201).json({msg: "Song added to the given playlist!"})
+    return res.status(201).json({ msg: "Song added to the given playlist!" });
   } catch (err) {
     console.log(err);
     return res
@@ -163,6 +243,43 @@ exports.addSongToPlaylist = async (req, res) => {
 };
 
 //DELETE method to delete a song with given :songid from a playlist with :playlistid
-exports.deleteSongFromPlaylist = (req, res) => {
+exports.deleteSongFromPlaylist = async (req, res) => {
+  //Handle errors coming from the checkSongId of songsValidator
+  checkErrors(req, res);
 
+  try {
+    const { songId } = req.body;
+
+    //Check if user has playlist with given id
+    if (
+      !(await checkIfPlaylistExist(
+        req.params.playlistid,
+        req.user.dataValues.userId
+      ))
+    ) {
+      return res
+        .status(404)
+        .json({ err: "Playlist with given id does not exist!" });
+    }
+
+    //If song does not exists
+    if (!(await checkIfSongExist(songId))) {
+      return res
+        .status(404)
+        .json({ err: "Song with given id does not exist!" });
+    }
+
+    await PlaylistSong.destroy({
+      where: { playlistId: req.params.playlistid, songId: songId },
+    });
+
+    return res
+      .status(200)
+      .json({ msg: "Song deleted from playlist successfully!" });
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .json({ err: "Something has went wrong. Please try again later!" });
+  }
 };

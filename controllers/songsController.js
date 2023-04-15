@@ -75,16 +75,18 @@ exports.getAllSongs = async (req, res) => {
 exports.getSingleSong = async (req, res) => {
   try {
     const songDetails = await songUtils.getSongFromId(req.params.songid)
-    return res.status(200).json({songDetails: songDetails});
     
-  } catch (err) {
-    //If song with given id is not found
-    if (err.response.data.status === "FAILED") {
+    //Check if song was found or not
+    if (Object.keys(songDetails).length === 0) {
       return res.status(404).json({
         err: "Song with given id does not exist. Please recheck the songId!",
       });
     }
 
+    return res.status(200).json({songDetails: songDetails});
+    
+  } catch (err) {
+    console.log(err)
     return res
       .status(500)
       .json({ err: "Something has went wrong. Please try again later!" });

@@ -11,12 +11,7 @@ router.post("/signup", userValidator.signup, userController.signup);
 router.post("/login", userValidator.login, userController.login);
 
 //POST method to logout the logged in user
-router.post("/logout");
-
-router.get("/test", passport.authenticate("jwt", {session: false}), (req, res) => {
-  console.log("userbody", req.user.dataValues.userId)
-  return res.send("hello")
-} )
+router.post("/logout", passport.authenticate("jwt", { session: false }), userController.logout);
 
 //Ideas
 router.post("/recover");

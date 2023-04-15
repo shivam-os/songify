@@ -54,13 +54,13 @@ db.user.belongsToMany(db.user, {as: "user",
 db.user.belongsToMany(db.user, {as: "friend",
   through: db.userFriend, foreignKey: "friendId"
 });
-// db.playlist.belongsToMany(db.song, {
-//   through: "playlist_songs",
-//   foreignKey: "playlistId",
-// });
-// db.song.belongsToMany(db.playlist, {
-//   through: "playlist_songs",
-//   foreignKey: "songId",
-// });
+db.playlist.belongsToMany(db.song, {
+  through: "playlist_songs",
+  foreignKey: "playlistId",
+});
+db.song.belongsToMany(db.playlist, {
+  through: "playlist_songs",
+  foreignKey: "songId",
+});
 
 module.exports = db;

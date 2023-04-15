@@ -1,9 +1,22 @@
-const { validationResult } = require("express-validator");
 const User = require("../config/db").user;
-const checkErrors = require("../utils/validators/checkErrors")
+const checkErrors = require("../utils/validators/checkErrors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+
+const checkExistingUser = async (email) => {
+  try {
+    const existingUser = await User.findOne({
+      where: { email: email },
+      attributes: ["name"],
+    });
+    return existingUser;
+  } catch (err) {
+    console.log(err);
+  }
+
+  return null;
+};
 
 exports.signup = async (req, res) => {
   //Handle errors coming from the signup userValidator
@@ -13,9 +26,7 @@ exports.signup = async (req, res) => {
     const { name, email, password } = req.body;
 
     //Check if user with given email already exists in the database
-    const existingUser = await User.findOne({ where: { email: email } });
-
-    if (existingUser) {
+    if (await checkExistingUser(email)) {
       return res.status(403).json({
         err: "User with given email already exists! Check the entered email or log in.",
       });
@@ -47,7 +58,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     //Check if user with given email already exists in the database
-    const existingUser = await User.findOne({ where: { email: email } });
+    const existingUser = checkExistingUser(email)
 
     //If user not exists in the database
     if (!existingUser) {
@@ -56,10 +67,15 @@ exports.login = async (req, res) => {
         .json({ err: "User not found! Check email again or sign up." });
     }
 
+    //Get password of the user from database
+    const user = await User.findOne({
+      where: { email: email },
+    });
+
     //Compare the entered password with stored password from database
     const doesPasswordMatch = await bcrypt.compare(
       password,
-      existingUser.password
+      user.dataValues.password
     );
     if (!doesPasswordMatch) {
       return res
@@ -68,10 +84,14 @@ exports.login = async (req, res) => {
     }
 
     //If password is matched the create a jwt and send it
-    const payload = { userId: existingUser.dataValues.userId };
-    const bearerToken = await jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "3h",
-    });
+    const payload = { userId: user.dataValues.userId };
+    const bearerToken = await jwt.sign(
+      payload,
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "3h",
+      }
+    );
 
     return res
       .status(201)
@@ -79,7 +99,7 @@ exports.login = async (req, res) => {
         expires: new Date(Date.now() + 3 * 60 * 60 * 1000), //Cookie will be removed in 3 hours
         httpOnly: true,
       })
-      .json({ msg: "User logged in successfully!" });
+      .json({ msg: `Welcome back ${user.name}! You are now logged in.` });
   } catch (err) {
     console.log(err);
     return res
@@ -89,11 +109,12 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
+
   return res
     .status(201)
-    .clearCookie("token", bearerToken, {
+    .clearCookie("token", req.cookies.token, {
       expires: new Date(Date.now() + 3 * 60 * 60 * 1000), //Cookie will be removed in 3 hours
       httpOnly: true,
     })
-    .json({ msg: "User logged out successfully!" });
+    .json({ msg: `Now you are logged out! We hope to see you soon.` });
 };

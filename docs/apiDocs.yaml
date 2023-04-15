@@ -1,0 +1,391 @@
+openapi: 3.0.0
+info:
+  title: SONGIFY API
+  description: A Spotify like app which allows the registered users to create playlists & add songs to them.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3005
+    description: Local server
+  - url: https://jjkj.com
+    description: Live server
+
+tags:
+  - name: User
+    description: A registered entity that can access all endpoints
+  - name: Playlist
+    description: A Collection of songs created by a User
+  - name: Song
+    description: An entity with various details stored in the Playlist
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        userId:
+          type: INTEGER
+          description: Auto-generated id
+        name:
+          type: STRING
+          description: Name of user
+        email:
+          type: STRING
+          description: Email of user
+        password:
+          type: STRING
+          description: Password of user which is atleast 8 characters long & must include- one uppercase letter, one lowercase letter, one special character, one digit.
+      example:
+        name: Rahul
+        email: rahul@test.com
+        password: rAh3OOL?
+
+    Playlist:
+      type: object
+      required:
+        - name
+        - description 
+      properties:
+        playlistId:
+          type: INTEGER
+          description: Auto-generated id
+        userId:
+          type: INTEGER
+          description: Id of the user who created the playlist (not visible in response)
+        name:
+          type: STRING
+          description: Name of the playlist
+        description:
+          type: STRING
+          description: Description of the playlist
+      example:
+        name: Morning motivation
+        description: Charge the body for whole day!
+    
+    Song:
+      type: object
+      required:
+        - externalSongId
+      properties:
+        songId:
+          type: INTEGER
+          description: Auto-generated id
+        externalSongId:
+          type: STRING
+          description: Song id from external source
+        name:
+          type: STRING
+          description: Name of the song
+        album:
+          type: INTEGER
+          description: Album to which the song belongs
+        duration:
+          type: INTEGER
+          description: Total duration of song in seconds
+        year:
+          type: INTEGER
+          description: Year in which song was released
+        url:
+          type: STRING
+          description: Song url from external source
+        primaryArtists:
+          type: STRING
+          description: Artists who have created songs
+      example:
+        songId: EIdYxJXT
+
+    Error:
+      type: Object
+      properties:
+        err:
+          type: STRING
+      example:
+        err: Error message
+
+  responses:
+    ServerError:
+      description: Something has went wrong. Please try again later!
+
+    ValidationsError:
+      description: Required validations failed.
+
+paths:
+  #Users paths
+  /api/users/signup:
+    post:
+      tags:
+        - User
+      summary: Creates a new user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        201:
+          description: User created successfully!
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        403:
+          description: User with given email already exists! Check the entered email or log in.
+        500:
+          $ref: "#/components/responses/ServerError"
+
+  /api/users/login:
+    post:
+      tags:
+        - User
+      summary: Log in an existing user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: STRING
+                  description: Existing user's email.
+                password:
+                  type: STRING
+                  description: Existing user's password.
+              example:
+                email: shivam@test.com
+                password: H3llo@123
+      responses:
+        201:
+          description: User logged in successfully!!
+        400:
+          description: Incorrect email or password! Please try again.
+        404:
+          description: User not found! Check email again or sign up.
+        500:
+          $ref: "#/components/responses/ServerError"
+
+  /api/users/logout:
+    post:
+      tags:
+        - User
+      summary: Log out an existing user.
+      responses:
+        201:
+          description: User logged in successfully!!
+        400:
+          description: Incorrect email or password! Please try again.
+        404:
+          description: User not found! Check email again or sign up.
+        500:
+          $ref: "#/components/responses/ServerError"
+
+  #Playlists paths
+  /api/playlists:
+    post:
+      tags:
+        - Playlist
+      summary: Creates a new playlist for the user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Playlist"
+      responses:
+        201:
+          description: Playlist created successfully.
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        500:
+          $ref: "#/components/responses/ServerError"
+
+    get:
+      tags:
+        - Playlist
+      summary: Returns all the playlists created by the user.
+      responses:
+        200:
+          description: A list of playlists.
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        404:
+          description: No playlists found! Create them to get the list.
+        500:
+          $ref: "#/components/responses/ServerError"
+  
+  /api/playlists/{playlistid}:
+    get:
+      tags:
+        - Playlist
+      summary: Returns all the details of a playlist with given id
+      parameters:
+        - in: path
+          name: playlistid
+          type: INTEGER
+          required: true
+          description: Numeric id of the playlist to get
+      responses:
+        201:
+          description: All the details of the playlist
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        404:
+          description: Playlist with given id does not exist!
+        500:
+          $ref: "#/components/responses/ServerError"
+    
+    put:
+      tags:
+        - Playlist
+      summary: Update the playlist with given id
+      parameters:
+        - in: path
+          name: playlistid
+          type: INTEGER
+          required: true
+          description: Numeric id of the playlist to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Playlist"
+      responses:
+        201:
+          description: Playlist updated successfully!
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        404:
+          description: Playlist with given id does not exist!
+        500:
+          $ref: "#/components/responses/ServerError"
+
+    delete:
+      tags:
+        - Playlist
+      summary: Delete the playlist with given id
+      parameters:
+        - in: path
+          name: playlistid
+          type: INTEGER
+          required: true
+          description: Numeric id of the playlist to delete
+      responses:
+        201:
+          description: Playlist deleted successfully!
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        404:
+          description: Playlist with given id does not exist!
+        500:
+          $ref: "#/components/responses/ServerError"
+  
+  /api/playlists/{playlistid}/songs:
+    post:
+      tags:
+        - Playlist
+      summary: Add a song with given songId to the playlist with given id
+      parameters:
+        - in: path
+          name: playlistid
+          type: INTEGER
+          required: true
+          description: Numeric id of the playlist to post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Song"
+      responses:
+        201:
+          description: Song added to the given playlist!
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        404:
+          description: Playlist with given id does not exist!
+        500:
+          $ref: "#/components/responses/ServerError"
+
+    delete:
+      tags:
+        - Playlist
+      summary: Delete a song with given songId from the playlist with given id
+      parameters:
+        - in: path
+          name: playlistid
+          type: INTEGER
+          required: true
+          description: Numeric id of the playlist to delete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Song"
+      responses:
+        201:
+          description: Song deleted from the given playlist!
+        400:
+          $ref: "#/components/responses/ValidationsError"
+        404:
+          description: Playlist with given id does not exist!
+        500:
+          $ref: "#/components/responses/ServerError"
+
+
+  #Songs paths
+  /api/songs:
+    get:
+      tags:
+        - Song
+      summary: Returns all the available songs.
+      responses:
+        200:
+          description: A list of songs.
+        500:
+          $ref: "#/components/responses/ServerError"
+  
+  /api/songs/{songid}:
+    get:
+      tags:
+        - Song
+      summary: Return details about a song with given song id.
+      parameters:
+        - in: path
+          name: songid
+          type: STRING
+          required: true
+          description: String id of the playlist to get
+      responses:
+        200:
+          description: All the details about the song.
+        404:
+          description: Song with given id does not exist. Please recheck the songId!
+        500:
+          $ref: "#/components/responses/ServerError"
+  
+  /api/songs/search?term:
+    get:
+      tags:
+        - Song
+      summary: Return all the songs that match the search query.
+      parameters:
+        - in: query
+          name: term
+          type: STRING
+          required: true
+          description: Search term to for searching the songs.
+      responses:
+        200:
+          description: A list of songs matching the criteria.
+        400:
+          description: Please enter a valid search term and try again!
+        500:
+          $ref: "#/components/responses/ServerError"

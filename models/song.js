@@ -1,16 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
   const Song = sequelize.define("song", {
     songId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-
-    externalSongId: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+      primaryKey: true,
     },
 
     name: {
@@ -24,12 +18,12 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     duration: {
-      type: DataTypes.SMALLINT,
+      type: DataTypes.TINYINT,
       allowNull: false,
     },
 
     year: {
-      type: DataTypes.SMALLINT,
+      type: DataTypes.TINYINT,
       allowNull: false,
     },
 

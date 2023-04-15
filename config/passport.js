@@ -14,9 +14,13 @@ module.exports = (passport) => {
   passport.use(
     new JwtStrategy(options, async function (jwt_payload, done) {
       try {
-        const existingUser = await User.findOne({attributes: ["userId"]},{
+        //Check if user with userId exists in the database
+        const existingUser = await User.findOne({
           where: { userId: jwt_payload.userId },
+          attributes: ["userId"]
         });
+
+        //If it exists, then send the userId else return false
         if (existingUser) {
           return done(null, existingUser);
         } else {

@@ -1,3 +1,5 @@
+const api = require("../config/externalApi")
+
 exports.getSongFromId = async (songid) => {
   try {
     const response = await api.get(`/songs?id=${songid}`);
@@ -9,8 +11,8 @@ exports.getSongFromId = async (songid) => {
       songId: id,
       name: name,
       album: album.name,
-      duration: duration,
-      year: year,
+      duration: Number(duration),
+      year: Number(year),
       url: url,
       primaryArtists: primaryArtists,
     };
