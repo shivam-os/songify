@@ -11,6 +11,10 @@ router.post("/signup", userValidator.signup, userController.signup);
 router.post("/login", userValidator.login, userController.login);
 
 //POST method to logout the logged in user
-router.post("/logout", passport.authenticate("jwt", { session: false }), userController.logout);
+router.post(
+  "/logout",
+  passport.authenticate("jwt", { session: false }),
+  userController.logout
+);
 
 module.exports = router;

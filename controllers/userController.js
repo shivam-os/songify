@@ -1,6 +1,6 @@
 const User = require("../config/db").user;
 const checkErrors = require("../utils/validators/checkErrors");
-const bcrypt = require("bcrypt");
+const bcryptjs = require("bcryptjs")
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -33,9 +33,10 @@ exports.signup = async (req, res) => {
     }
 
     //Hash the password before storing it in database
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcryptjs.hash(password, 10);
+    console.log(hashedPassword)
 
-    const newUser = await User.create({
+    await User.create({
       name: name,
       email: email,
       password: hashedPassword,
@@ -73,7 +74,7 @@ exports.login = async (req, res) => {
     });
 
     //Compare the entered password with stored password from database
-    const doesPasswordMatch = await bcrypt.compare(
+    const doesPasswordMatch = await bcryptjs.compare(
       password,
       user.dataValues.password
     );
