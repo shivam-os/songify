@@ -2,15 +2,7 @@ const { Sequelize, DataTypes } = require("sequelize");
 require("dotenv").config();
 
 //Create connection to database
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USERNAME,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    dialect: "mysql",
-  }
-);
+const sequelize = new Sequelize(process.env.DB_CONNECTION_URL);
 
 //Test the connection to database
 const testDBconnection = async () => {
@@ -48,11 +40,15 @@ db.userFriend = require("../models/userFriend")(sequelize, DataTypes);
 
 //Define associations between the tables
 db.user.hasMany(db.playlist, { foreignKey: "userId" });
-db.user.belongsToMany(db.user, {as: "user",
-  through: db.userFriend, foreignKey: "userId"
+db.user.belongsToMany(db.user, {
+  as: "user",
+  through: db.userFriend,
+  foreignKey: "userId",
 });
-db.user.belongsToMany(db.user, {as: "friend",
-  through: db.userFriend, foreignKey: "friendId"
+db.user.belongsToMany(db.user, {
+  as: "friend",
+  through: db.userFriend,
+  foreignKey: "friendId",
 });
 db.playlist.belongsToMany(db.song, {
   through: "playlist_songs",

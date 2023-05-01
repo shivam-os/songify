@@ -58,7 +58,9 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     //Check if user with given email already exists in the database
-    const existingUser = checkExistingUser(email)
+    const existingUser = await checkExistingUser(email);
+
+    console.log("user2", existingUser);
 
     //If user not exists in the database
     if (!existingUser) {
@@ -109,7 +111,6 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-
   return res
     .status(201)
     .clearCookie("token", req.cookies.token, {
