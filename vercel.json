@@ -11,10 +11,5 @@
       "src": "/(.*)",
       "dest": "/"
     }
-  ],
-  "functions": {
-    "api/index.js": {
-      "incldeFiles": "docs/**"
-    }
-  }
+  ]
 }
