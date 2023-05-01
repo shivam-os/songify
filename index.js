@@ -3,7 +3,6 @@ const app = express();
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
-const cors = require("cors");
 require("dotenv").config();
 require("./config/db");
 require("./config/passport")(passport);
@@ -13,7 +12,6 @@ const songRoutes = require("./routes/songsRoutes");
 const { swaggerServe, swaggerSetup } = require("./config/swagger");
 
 //Required middlewares
-app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cookieParser());

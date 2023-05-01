@@ -7,7 +7,7 @@ info:
 servers:
   - url: http://localhost:3005
     description: Local server
-  - url: https://jjkj.com
+  - url: https://songify-beta.vercel.app
     description: Live server
 
 tags:
