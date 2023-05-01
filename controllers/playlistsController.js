@@ -198,8 +198,6 @@ exports.addSongToPlaylist = async (req, res) => {
   try {
     const { songId } = req.body;
 
-    console.log("value", req);
-
     //Check if user has playlist with given id
     if (
       !(await checkIfPlaylistExist(

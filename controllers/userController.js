@@ -60,8 +60,6 @@ exports.login = async (req, res) => {
     //Check if user with given email already exists in the database
     const existingUser = await checkExistingUser(email);
 
-    console.log("user2", existingUser);
-
     //If user not exists in the database
     if (!existingUser) {
       return res
