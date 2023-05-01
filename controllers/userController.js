@@ -34,7 +34,6 @@ exports.signup = async (req, res) => {
 
     //Hash the password before storing it in database
     const hashedPassword = await bcryptjs.hash(password, 10);
-    console.log(hashedPassword)
 
     await User.create({
       name: name,
