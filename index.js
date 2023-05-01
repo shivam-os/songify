@@ -3,13 +3,13 @@ const app = express();
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const passport = require("passport");
+require("dotenv").config();
 require("./config/db");
 require("./config/passport")(passport);
 const userRoutes = require("./routes/userRoutes");
 const playlistsRoutes = require("./routes/playlistsRoutes");
 const songRoutes = require("./routes/songsRoutes");
 const { swaggerServe, swaggerSetup } = require("./config/swagger");
-const PORT = 3005;
 
 //Required middlewares
 app.use(express.json());
@@ -22,6 +22,6 @@ app.use("/api/playlists", playlistsRoutes);
 app.use("/api/songs", songRoutes);
 app.use("/api/docs", swaggerServe, swaggerSetup);
 
-app.listen(PORT, () => {
+app.listen(process.env.PORT, () => {
   console.log(`Server is running on port: ${PORT}`);
 });
