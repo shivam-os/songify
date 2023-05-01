@@ -10,5 +10,5 @@ const CSS_URL =
 
 module.exports = {
   swaggerServe: swaggerUi.serve,
-  swaggerSetup: swaggerUi.setup(swaggerJsDoc, { customCSSUrl: CSS_URL }),
+  swaggerSetup: swaggerUi.setup(swaggerJsDoc, { customCssUrl: CSS_URL }),
 };
