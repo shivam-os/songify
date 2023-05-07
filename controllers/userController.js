@@ -1,81 +1,73 @@
 const User = require("../config/db").user;
-const checkErrors = require("../utils/validators/checkErrors");
-const bcryptjs = require("bcryptjs")
+const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-
-const checkExistingUser = async (email) => {
-  try {
-    const existingUser = await User.findOne({
-      where: { email: email },
-      attributes: ["name"],
-    });
-    return existingUser;
-  } catch (err) {
-    console.log(err);
-  }
-
-  return null;
+const httpResponses = require("../utils/httpResponses");
+const responseObj = "User";
+const accessTokenValidity = 3 * 60 * 60 * 1000; //3 hours in milliseconds
+const accessTokenOptions = {
+  expires: new Date(Date.now() + accessTokenValidity),
+  httpOnly: true,
 };
 
+//POST method to register a new user
 exports.signup = async (req, res) => {
   //Handle errors coming from the signup userValidator
-  checkErrors(req, res);
+  if (httpResponses.validationError(req, res)) {
+    return;
+  }
 
   try {
     const { name, email, password } = req.body;
 
-    //Check if user with given email already exists in the database
-    if (await checkExistingUser(email)) {
-      return res.status(403).json({
-        err: "User with given email already exists! Check the entered email or log in.",
-      });
+    const existingUser = await User.findOne({
+      where: { email },
+    });
+
+    //Check if user with given email already exists
+    if (existingUser) {
+      return httpResponses.existsError(res, responseObj);
     }
 
     //Hash the password before storing it in database
     const hashedPassword = await bcryptjs.hash(password, 10);
 
     await User.create({
-      name: name,
-      email: email,
+      name,
+      email,
       password: hashedPassword,
     });
 
-    return res.status(201).json({ msg: "User created successfully!" });
+    return httpResponses.createdResponse(res, responseObj);
   } catch (err) {
     console.log(err);
-    return res
-      .status(500)
-      .json({ err: "Something has went wrong. Please try again later!" });
+    return httpResponses.serverError(res);
   }
 };
 
+//POST method to login an existing user
 exports.login = async (req, res) => {
-  //Hanldle errors coming from login userValidator
-  checkErrors(req, res);
+  //Handle errors coming from the signup userValidator
+  if (httpResponses.validationError(req, res)) {
+    return;
+  }
 
   try {
     const { email, password } = req.body;
 
-    //Check if user with given email already exists in the database
-    const existingUser = await checkExistingUser(email);
-
-    //If user not exists in the database
-    if (!existingUser) {
-      return res
-        .status(404)
-        .json({ err: "User not found! Check email again or sign up." });
-    }
-
-    //Get password of the user from database
-    const user = await User.findOne({
-      where: { email: email },
+    const existingUser = await User.findOne({
+      where: { email },
     });
+
+    //Check if user with given email doesn't exist
+    if (!existingUser) {
+      return httpResponses.notFoundError(res, responseObj);
+    }
 
     //Compare the entered password with stored password from database
     const doesPasswordMatch = await bcryptjs.compare(
       password,
-      user.dataValues.password
+      existingUser.dataValues.password
     );
     if (!doesPasswordMatch) {
       return res
@@ -84,36 +76,31 @@ exports.login = async (req, res) => {
     }
 
     //If password is matched the create a jwt and send it
-    const payload = { userId: user.dataValues.userId };
+    const payload = { userId: existingUser.dataValues.userId };
     const bearerToken = await jwt.sign(
       payload,
       process.env.ACCESS_TOKEN_SECRET,
       {
-        expiresIn: "3h",
+        expiresIn: `${accessTokenValidity}`,
       }
     );
 
     return res
       .status(201)
-      .cookie("token", bearerToken, {
-        expires: new Date(Date.now() + 3 * 60 * 60 * 1000), //Cookie will be removed in 3 hours
-        httpOnly: true,
-      })
-      .json({ msg: `Welcome back ${user.name}! You are now logged in.` });
+      .cookie("token", bearerToken, accessTokenOptions)
+      .json({
+        msg: `Welcome back ${existingUser.name}! You are now logged in.`,
+      });
   } catch (err) {
     console.log(err);
-    return res
-      .status(500)
-      .json({ err: "Something has went wrong. Please try again later!" });
+    return httpResponses.serverError(res);
   }
 };
 
+//POST method to logout the existing user
 exports.logout = (req, res) => {
   return res
     .status(201)
-    .clearCookie("token", req.cookies.token, {
-      expires: new Date(Date.now() + 3 * 60 * 60 * 1000), //Cookie will be removed in 3 hours
-      httpOnly: true,
-    })
+    .clearCookie("token", req.cookies.token, accessTokenOptions)
     .json({ msg: `Now you are logged out! We hope to see you soon.` });
 };

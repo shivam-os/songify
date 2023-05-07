@@ -19,7 +19,7 @@ module.exports = (passport) => {
           where: { userId: jwt_payload.userId },
           attributes: ["userId"]
         });
-
+        
         //If it exists, then send the userId else return false
         if (existingUser) {
           return done(null, existingUser);

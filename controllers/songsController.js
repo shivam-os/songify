@@ -1,5 +1,7 @@
 const api = require("../config/externalApi");
 const songUtils = require("../utils/songUtils");
+const httpResponses = require("../utils/httpResponses");
+const responseObj = "Song"
 let songs = [];
 
 //Get trending albums from the homepage of Saavn
@@ -8,12 +10,8 @@ const getTrendingAlbums = async () => {
     const response = await api.get("/modules?language=hindi");
     const albums = response.data.data.trending.albums;
     for (const album of albums) {
-      try {
         const data = await getAlbumSongs(album.id);
         songs.push(data);
-      } catch (err) {
-        console.log(err);
-      }
     }
   } catch (err) {
     console.log(err);
@@ -62,12 +60,10 @@ const searchSongsForQuery = async (query) => {
 exports.getAllSongs = async (req, res) => {
   try {
     await getTrendingAlbums();
-    res.status(200).json({ songs: songs.flat() });
+    return res.status(200).json({ songs: songs.flat() });
   } catch (err) {
     console.log(err);
-    return res
-      .status(500)
-      .json({ err: "Something has went wrong. Please try again later!" });
+    return httpResponses.serverError(res);
   }
 };
 
@@ -78,18 +74,14 @@ exports.getSingleSong = async (req, res) => {
     
     //Check if song was found or not
     if (Object.keys(songDetails).length === 0) {
-      return res.status(404).json({
-        err: "Song with given id does not exist. Please recheck the songId!",
-      });
+      return httpResponses.notFoundError(res, responseObj)
     }
 
     return res.status(200).json({songDetails: songDetails});
     
   } catch (err) {
     console.log(err)
-    return res
-      .status(500)
-      .json({ err: "Something has went wrong. Please try again later!" });
+    return httpResponses.serverError(res);
   }
 };
 
@@ -109,8 +101,6 @@ exports.searchSong = async (req, res) => {
     return res.status(200).json({ results: songsList });
   } catch (err) {
     console.log(err);
-    return res
-      .status(500)
-      .json({ err: "Something has went wrong. Please try again later!" });
+    return httpResponses.serverError(res)
   }
 };

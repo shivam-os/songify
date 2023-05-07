@@ -48,7 +48,7 @@ components:
       type: object
       required:
         - name
-        - description 
+        - description
       properties:
         playlistId:
           type: INTEGER
@@ -65,7 +65,7 @@ components:
       example:
         name: Morning motivation
         description: Charge the body for whole day!
-    
+
     Song:
       type: object
       required:
@@ -109,7 +109,7 @@ components:
   responses:
     ServerError:
       description: Something has went wrong. Please try again later!
-    
+
     UnauthorizedError:
       description: You are currently unauthorized. Please login to use this API.
 
@@ -227,7 +227,7 @@ paths:
           description: No playlists found! Create them to get the list.
         500:
           $ref: "#/components/responses/ServerError"
-  
+
   /api/playlists/{playlistid}:
     get:
       tags:
@@ -250,7 +250,7 @@ paths:
           description: Playlist with given id does not exist!
         500:
           $ref: "#/components/responses/ServerError"
-    
+
     put:
       tags:
         - Playlist
@@ -268,7 +268,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Playlist"
       responses:
-        201:
+        200:
           description: Playlist updated successfully!
         400:
           $ref: "#/components/responses/ValidationsError"
@@ -290,7 +290,7 @@ paths:
           required: true
           description: Numeric id of the playlist to delete
       responses:
-        201:
+        200:
           description: Playlist deleted successfully!
         400:
           $ref: "#/components/responses/ValidationsError"
@@ -300,7 +300,7 @@ paths:
           description: Playlist with given id does not exist!
         500:
           $ref: "#/components/responses/ServerError"
-  
+
   /api/playlists/{playlistid}/songs:
     post:
       tags:
@@ -347,7 +347,7 @@ paths:
             schema:
               $ref: "#/components/schemas/Song"
       responses:
-        201:
+        200:
           description: Song deleted from the given playlist!
         400:
           $ref: "#/components/responses/ValidationsError"
@@ -357,7 +357,6 @@ paths:
           description: Playlist with given id does not exist!
         500:
           $ref: "#/components/responses/ServerError"
-
 
   #Songs paths
   /api/songs:
@@ -372,7 +371,7 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         500:
           $ref: "#/components/responses/ServerError"
-  
+
   /api/songs/{songid}:
     get:
       tags:
@@ -393,7 +392,7 @@ paths:
           description: Song with given id does not exist. Please recheck the songId!
         500:
           $ref: "#/components/responses/ServerError"
-  
+
   /api/songs/search?term:
     get:
       tags:
